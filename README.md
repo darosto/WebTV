@@ -33,6 +33,10 @@ TVHeadend muss installiert sein und alle Sender eingelesen
    . .venv/bin/activate
    pip install -r requirements.txt
    ```
+ 4. Adress zum TVHeadend Server in app.py anpassen:
+    ```bash
+     TVH_HOST = "http://your-host:9981" IP von tvheadend server
+    ``` 
 
 ### Anwendung starten
 Starten Sie den lokalen Entwicklungsserver:
