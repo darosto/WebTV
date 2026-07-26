@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="de" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>WebTV Dashboard & EPG</title>
+    <!-- Bulma 1.0 mit nativem Dark-Mode-Support -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.0/css/bulma.min.css">
+</head>
+<body>
+    <section class="section">
+        <div class="container">
+            <h1 class="title">📺 WebTV Live & EPG</h1>
+
+            <!-- Videoplayer Container -->
+            <div class="card mb-5">
+                <div class="card-content">
+                    <div class="video-container" style="max-width: 800px; margin: 0 auto;">
+                        <video id="videoPlayer" controls autoplay style="width: 100%; height: auto; background: #000;"></video>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Senderliste mit EPG -->
+            <h2 class="subtitle">Sender & Aktuelles Programm</h2>
+            <div id="channelList" class="columns is-multiline"></div>
+        </div>
+    </section>
+
+    <script>
+        // Stream abspielen über die Flask-Proxy-Route
+        function playStream(channelId) {
+            const video = document.getElementById('videoPlayer');
+            
+            video.src = `/video_proxy/${channelId}`;
+            video.load();
+            video.play().catch(e => console.error("Wiedergabefehler:", e));
+        }
+
+        // Hilfsfunktion: Formatierung von UNIX-Timestamps zu HH:MM Uhr
+        function formatTime(timestamp) {
+            if (!timestamp) return '--:--';
+            const date = new Date(timestamp * 1000);
+            return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+
+        // Sender und EPG-Daten laden
+        async function loadChannelsAndEPG() {
+            const container = document.getElementById('channelList');
+            container.innerHTML = '<p class="has-text-grey">Lade Sender und EPG...</p>';
+
+            try {
+                // Beide Anfragen an Flask parallel ausführen
+                const [channelsRes, epgRes] = await Promise.all([
+                    fetch('/api/channels'),
+                    fetch('/api/epg')
+                ]);
+
+                const channelsData = await channelsRes.json();
+                const epgData = await epgRes.json();
+
+                // EPG-Events nach derzeitigem Timestamp filtern
+                const now = Math.floor(Date.now() / 1000);
+                const currentEvents = {};
+
+                if (epgData.entries) {
+                    epgData.entries.forEach(event => {
+                        if (event.start <= now && event.stop >= now) {
+                            currentEvents[event.channelUuid] = event;
+                        }
+                    });
+                }
+
+                container.innerHTML = '';
+
+                if (channelsData.entries) {
+                    channelsData.entries.forEach(channel => {
+                        const col = document.createElement('div');
+                        col.className = 'column is-one-third';
+
+                        const event = currentEvents[channel.uuid];
+                        let epgHtml = '<p class="has-text-grey-light is-size-7 mt-2">Keine EPG-Daten verfügbar</p>';
+                        
+                        if (event) {
+                            const startTime = formatTime(event.start);
+                            const stopTime = formatTime(event.stop);
+                            
+                            // Fortschritt der Sendung berechnen
+                            const totalDuration = event.stop - event.start;
+                            const elapsed = now - event.start;
+                            const progressPercent = Math.min(100, Math.max(0, (elapsed / totalDuration) * 100));
+
+                            epgHtml = `
+                                <div class="mt-2">
+                                    <p class="is-size-7 has-text-weight-bold has-text-primary mb-1">
+                                        JETZT: ${event.title}
+                                    </p>
+                                    <p class="is-size-7 has-text-grey">
+                                        ${startTime} - ${stopTime}
+                                    </p>
+                                    <progress class="progress is-small is-primary mt-1" value="${progressPercent}" max="100">
+                                        ${Math.round(progressPercent)}%
+                                    </progress>
+                                </div>
+                            `;
+                        }
+
+                        col.innerHTML = `
+                            <div class="card" style="height: 100%;">
+                                <div class="card-content">
+                                    <div class="is-flex is-justify-content-space-between is-align-items-center">
+                                        <p class="title is-5 mb-0">${channel.name}</p>
+                                        <button class="button is-small is-link" onclick="playStream('${channel.uuid}')">
+                                            ▶ Stream
+                                        </button>
+                                    </div>
+                                    ${epgHtml}
+                                </div>
+                            </div>
+                        `;
+                        container.appendChild(col);
+                    });
+                }
+            } catch (err) {
+                console.error(err);
+                container.innerHTML = `<div class="notification is-danger">Fehler beim Laden der Daten!</div>`;
+            }
+        }
+
+        // Beim Laden der Seite ausführen
+        loadChannelsAndEPG();
+
+        // Alle 60 Sekunden EPG und Fortschrittsbalken aktualisieren
+        setInterval(loadChannelsAndEPG, 60000);
+    </script>
+</body>
+</html>

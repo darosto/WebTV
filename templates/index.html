@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="de" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>WebTV - TVheadend Player</title>
+
+    <!-- Bulma CSS Framework -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.0/css/bulma.min.css">
+    
+    <!-- Eigenes ausgelagertes Stylesheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <!-- 1. Fullscreen Player im Hintergrund -->
+    <video id="videoPlayer" controls autoplay></video>
+
+    <!-- Platzhalter Overlay wenn kein Sender läuft -->
+    <div id="playerPlaceholder" class="player-placeholder">
+        <!--div class="placeholder-content">
+            <p class="is-size-1">📺</p>
+            <p class="title is-4 has-text-white mt-2">Willkommen bei WebTV</p>
+            <p class="subtitle is-6 has-text-grey-light">Wähle links einen Sender aus, um das Live-Programm zu starten.</p>
+        </div-->
+    </div>
+
+    <!-- 2. Lade-Spinner während des Umschaltens -->
+    <div id="loadingSpinner" class="loading-spinner is-hidden">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- 3. TV-Box Infobar (Einblender von unten) -->
+    <div id="tvInfobar" class="tv-infobar is-hidden">
+        <div class="infobar-content">
+            <div class="infobar-header">
+                <span id="infoChannelTitle" class="infobar-channel-title">Sendername</span>
+                <span id="infoClock" class="infobar-clock">00:00</span>
+            </div>
+            <div id="infoEpgTitle" class="infobar-epg-title">Lade EPG-Daten...</div>
+            <div class="infobar-progress-container">
+                <div id="infoProgressBar" class="infobar-progress-bar" style="width: 0%;"></div>
+            </div>
+            <div class="infobar-footer">
+                <span id="infoEpgTime" class="infobar-epg-time">00:00 - 00:00</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. Transparente Sidebar links -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <a href="/">
+                <h1 class="title is-4 has-text-white mb-1">📺 WebTV</h1>
+            </a>
+            <p class="subtitle is-7 has-text-grey-light">TVheadend Streamer</p>
+        </div>
+
+        <!-- Container für Senderliste -->
+        <div id="channelList" class="channel-list">
+            <p class="has-text-grey p-3">Lade Sender und EPG...</p>
+        </div>
+    </div>
+
+    <!-- Ausgelagertes JavaScript -->
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
