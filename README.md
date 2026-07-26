@@ -1,6 +1,6 @@
 # WebTV Project 📺
 
-![WebTV Vorschau](preview.png)
+![WebTV Vorschau](blob/main/preview.png)
 
 Eine moderne WebTV-Plattform für das Streamen von Live-Inhalten und Video-on-Demand (VoD) direkt im Browser.
 
